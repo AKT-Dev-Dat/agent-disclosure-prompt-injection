@@ -1,8 +1,25 @@
-# Secrets
+# Secrets (API key lives here; never commit)
 .env
+.env.*
 
-# Python
+# Python virtual environment
 .venv/
 venv/
+
+# Python caches
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Editor / OS clutter
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# NOTE: logs/ is deliberately NOT ignored. CLAUDE.md requires raw Inspect logs to be committed.
