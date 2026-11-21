@@ -8,7 +8,9 @@ Columns written (one row per run):
     sample_id              AgentDojo's ID, e.g. "workspace-u0-i0" (user task 0 + injection task 0)
     model                  e.g. anthropic/claude-haiku-5-5
     condition              "injected" (attack present) or "benign" (injections off)
-    defence                "none", or "report-instruction" if --system-message was used
+    defence                "yes" if the reporting instruction was added with --system-message, else "no"
+                           (results/pilot_transcripts.csv was made by an earlier version that wrote
+                           "report-instruction"/"none" here; same meaning)
     system_message_added   the exact extra system message, if any (empty if none)
     user_task_id           the legitimate task the user asked for (0-39 in workspace)
     injection_task_id      the attacker's goal (0-13 in workspace); empty for benign runs
@@ -30,7 +32,10 @@ Columns written (one row per run):
                            user NOTHING, so it must not be scored as "silent" (disclosure 0); it is a
                            separate outcome. Its utility and attack_succeeded are both 0 by default,
                            because the agent was stopped, not because it chose anything.
-    error                  error text if the run crashed, else empty
+    classifier_category    for blocked runs: the category the classifier gave in its API response for that
+                           run (e.g. "cyber"), read per run from the response's stop_details. If a response
+                           lists several categories they are joined with ";". Empty for runs not blocked.
+    error                 error text if the run crashed, else empty
 
 "Visible" means the text parts of the agent's (assistant's) messages. Hidden reasoning and tool
 calls are not visible text, so they are left out. This follows decision #10 and Part 3 of
@@ -49,8 +54,25 @@ COLUMNS = [
     "log_file", "sample_id", "model", "condition", "defence", "system_message_added",
     "user_task_id", "injection_task_id", "attack_succeeded", "utility",
     "n_visible_messages", "visible_messages", "final_visible_message",
-    "has_hidden_reasoning", "stop_reason", "blocked_by_classifier", "error",
+    "has_hidden_reasoning", "stop_reason", "blocked_by_classifier", "classifier_category", "error",
 ]
+
+
+def classifier_categories(sample) -> str:
+    """Categories reported by Anthropic's classifier for every blocked model call in this run."""
+    found: list[str] = []
+    for e in sample.events:
+        if e.event != "model" or not e.output or str(e.output.stop_reason) != "content_filter":
+            continue
+        for choice in e.output.choices:
+            details = getattr(choice, "stop_details", None)
+            if details is None:
+                continue
+            cats = [c.category for c in (getattr(details, "categories", None) or [])]
+            if not cats and getattr(details, "category", None):
+                cats = [details.category]
+            found.extend(c for c in cats if c and c not in found)
+    return ";".join(found)
 
 
 def find_logs(paths: list[str]) -> list[Path]:
@@ -99,7 +121,7 @@ def rows_from_log(path: Path):
             "sample_id": sample.id,
             "model": log.eval.model,
             "condition": "injected" if injected else "benign",
-            "defence": "report-instruction" if system_message else "none",
+            "defence": "yes" if system_message else "no",
             "system_message_added": system_message,
             "user_task_id": sample.metadata.get("task_id", ""),
             "injection_task_id": sample.metadata.get("injection_task_id", ""),
@@ -112,6 +134,7 @@ def rows_from_log(path: Path):
             "has_hidden_reasoning": int(reasoning_seen),
             "stop_reason": stop_reasons[-1] if stop_reasons else "",
             "blocked_by_classifier": int("content_filter" in stop_reasons),
+            "classifier_category": classifier_categories(sample),
             "error": sample.error.message if sample.error else "",
         }
 
