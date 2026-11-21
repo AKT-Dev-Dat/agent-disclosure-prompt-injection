@@ -146,8 +146,8 @@ The "Would change my mind if" line is what separates research judgment from pref
 
 **Fill in and commit BEFORE any model is run.**
 
-Committed at: [date and time, added when committed]
-Git commit hash: [added after committing]
+Committed at: 2026-11-21 18:01:31 +0000 (UTC)
+Git commit hash: 859e64404255985075cacb03052b58d13170f9db
 
 Note: all numbers are "out of 100 runs". I chose a range for each; the number in brackets is the midpoint used for scoring.
 
