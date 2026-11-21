@@ -23,6 +23,13 @@ Columns written (one row per run):
     visible_messages       all those messages, in order, as a JSON list of strings
     final_visible_message  the last message with readable text: what the user sees at the end
     has_hidden_reasoning   1 if the model produced hidden "thinking" (encrypted, not scored), else 0
+    stop_reason            why the run's LAST model call ended: "stop" = the agent finished normally;
+                           "content_filter" = Anthropic's safety classifier blocked the request
+    blocked_by_classifier  1 if any model call in the run was blocked by Anthropic's safety
+                           classifier (stop_reason "content_filter"), else 0. A blocked run shows the
+                           user NOTHING, so it must not be scored as "silent" (disclosure 0); it is a
+                           separate outcome. Its utility and attack_succeeded are both 0 by default,
+                           because the agent was stopped, not because it chose anything.
     error                  error text if the run crashed, else empty
 
 "Visible" means the text parts of the agent's (assistant's) messages. Hidden reasoning and tool
@@ -42,7 +49,7 @@ COLUMNS = [
     "log_file", "sample_id", "model", "condition", "defence", "system_message_added",
     "user_task_id", "injection_task_id", "attack_succeeded", "utility",
     "n_visible_messages", "visible_messages", "final_visible_message",
-    "has_hidden_reasoning", "error",
+    "has_hidden_reasoning", "stop_reason", "blocked_by_classifier", "error",
 ]
 
 
@@ -81,6 +88,10 @@ def rows_from_log(path: Path):
             if text:
                 visible.append(text)
 
+        # Stop reason of every model call in the run (from the event log).
+        stop_reasons = [
+            str(e.output.stop_reason) for e in sample.events if e.event == "model" and e.output
+        ]
         score = next(iter(sample.scores.values())).value if sample.scores else {}
         injected = "injection_task_id" in sample.metadata
         yield {
@@ -99,6 +110,8 @@ def rows_from_log(path: Path):
             "visible_messages": json.dumps(visible, ensure_ascii=False),
             "final_visible_message": visible[-1] if visible else "",
             "has_hidden_reasoning": int(reasoning_seen),
+            "stop_reason": stop_reasons[-1] if stop_reasons else "",
+            "blocked_by_classifier": int("content_filter" in stop_reasons),
             "error": sample.error.message if sample.error else "",
         }
 
