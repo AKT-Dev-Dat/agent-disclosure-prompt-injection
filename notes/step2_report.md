@@ -66,6 +66,51 @@ What this shows:
 
 **Observation (not a result):** on this single task, Haiku warned the user in nearly the same words with and without the instruction. One task can't tell us whether the instruction changes behaviour; the full grid is what tests that.
 
-## Part C: random sample
+## Part C: random sample (drawn before any pilot run)
 
-(See the next section, added once the sample is drawn.)
+This sample is used for the pilot **and** the full study. It is saved in `results/sample.csv`, with columns `user_task_id` and `injection_task_id`, in the order drawn.
+
+### Seed and method
+- **Script:** `scripts/draw_sample.py`. It refuses to run if `results/sample.csv` already exists, so the sample can't be redrawn by accident.
+- **Seed:** `2026`, in Python's `random.Random(2026)`, with one generator used for both steps.
+  - A **seed** is the starting number for the random choices. It makes the draw repeatable: anyone who runs the script gets exactly this sample.
+
+How the draw works:
+1. The task IDs are read from the installed eval (`WORKSPACE_TASK_SUITE`): 40 user tasks (IDs 0–39) and 14 injection tasks (IDs 0–13).
+2. `rng.sample(user_ids, 20)` picks 20 **different** user tasks out of the 40.
+3. For each chosen user task, in the order drawn, `rng.choice(injection_ids)` picks one injection task out of the 14. The same injection task can be picked more than once.
+4. No filtering and no hand-picking. None of the workspace tasks needs Docker (checked: `REQUIRES_SANDBOX` is False for all 40 user tasks and all 14 injection tasks).
+
+### The sample
+| # | User task | Injection task |
+|---|---|---|
+| 1 | 7 | 10 |
+| 2 | 20 | 5 |
+| 3 | 32 | 3 |
+| 4 | 37 | 6 |
+| 5 | 6 | 4 |
+| 6 | 14 | 5 |
+| 7 | 26 | 5 |
+| 8 | 31 | 12 |
+| 9 | 28 | 6 |
+| 10 | 39 | 11 |
+| 11 | 0 | 8 |
+| 12 | 19 | 10 |
+| 13 | 2 | 1 |
+| 14 | 3 | 11 |
+| 15 | 9 | 5 |
+| 16 | 33 | 1 |
+| 17 | 34 | 8 |
+| 18 | 29 | 8 |
+| 19 | 21 | 4 |
+| 20 | 15 | 4 |
+
+### Facts about the draw (no action taken; for the limitations section)
+- **The step-1 test task was drawn.** User task 0 is in the sample, paired with injection task **8**, not injection task 0 as in the setup test. The step-1 and step-2 test runs are not part of the study data.
+- **Not every injection task is covered.** 9 of the 14 injection tasks appear (1, 3, 4, 5, 6, 8, 10, 11, 12). Injection task 5 appears 4 times; tasks 4 and 8 appear 3 times each. Tasks 0, 2, 7, 9 and 13 don't appear. This follows from the method in decision #12, where each user task gets its own independent draw.
+- **Some user tasks are "combined" tasks** in the eval's code (two simpler tasks joined together): 19, 37 and 39 in this sample. They may need more steps and tokens.
+
+### How the pairs will be run
+- **Why not the usual task options:** `-T user_task_ids=[…] -T injection_task_ids=[…]` would run **every combination** of the listed IDs (20 × 9 = 180 runs), not our 20 pairs.
+- **What we'll use instead:** Inspect's `--sample-id` option. It takes a list of exact sample IDs, e.g. `workspace-u7-i10,workspace-u20-i5,…`, built from `results/sample.csv`.
+- **Benign runs** use the same 20 user tasks, with IDs like `workspace-u7`.
