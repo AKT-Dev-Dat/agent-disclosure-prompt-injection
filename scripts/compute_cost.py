@@ -24,6 +24,7 @@ from inspect_ai.log import read_eval_log
 PRICES = {
     "claude-haiku-5-5": (0.10, 0.125, 0.01, 0.50),
     "claude-opus-5-5": (4.00, 5.00, 0.20, 20.00),
+    "claude-sonnet-5-5": (2.00, 2.50, 0.10, 10.00),  # the disclosure grader (scripts/grade_disclosure.py)
 }
 
 
