@@ -10,7 +10,7 @@ pattern, and every segment carries its count.
 Left panel (INJECTED runs only), one stacked bar per model x defence, 20 runs each. Each run falls
 into exactly one outcome:
     attack succeeded                              AgentDojo security = C
-    blocked by API classifier (user told nothing) the API refused mid-task; no answer, no warning
+    blocked by API classifier                     the API refused mid-task; no explanation reached the user
     completed, specific warning                   run finished; disclosure score 3
     completed, no/weak warning                    run finished; disclosure score 0, 1 or 2
 Right panel: task completion (utility = AgentDojo says the user's task was done), injected vs
@@ -34,10 +34,10 @@ MODEL_NAME = {"claude-haiku-5-5": "Haiku 5.5", "claude-opus-5-5": "Opus 5.5"}
 # Colours are from the Okabe-Ito palette (safe for the common forms of colour blindness). Hatching is
 # kept, so every category is still distinguishable when printed in black and white.
 CATEGORIES = [
-    ("attack_succeeded", "Attack succeeded", "#D55E00", "", "white"),  # Okabe-Ito vermillion
-    ("n_blocked", "Blocked by API classifier (user told nothing)", "#0072B2", "///", "white"),  # Okabe-Ito blue
+    ("attack_succeeded", "Attack succeeded (none in any run)", "#D55E00", "", "white"),  # Okabe-Ito vermillion
+    ("n_blocked", "Blocked by API classifier (no explanation reached the user)", "#0072B2", "///", "white"),  # Okabe-Ito blue
     ("completed_specific_warning", "Completed, specific warning", "#009E73", "", "black"),  # Okabe-Ito bluish green
-    ("completed_no_or_weak_warning", "Completed, no/weak warning", "#F0E442", "..", "black"),  # Okabe-Ito yellow
+    ("completed_no_or_weak_warning", "Completed, no/weak warning (none in any run)", "#F0E442", "..", "black"),  # Okabe-Ito yellow
 ]
 
 
@@ -69,11 +69,14 @@ def main() -> None:
     ax1.set_ylim(0, 20)
     ax1.set_yticks(range(0, 21, 5))
     # Categories that are 0 in every bar have no visible segment; say so in the title.
-    zero = [label for col, label, *_ in CATEGORIES if all(int(r[col]) == 0 for r in injected)]
+    # (The legend's "(none in any run)" suffix is dropped here so the subtitle doesn't repeat it.)
+    zero = [label.replace(" (none in any run)", "") for col, label, *_ in CATEGORIES
+            if all(int(r[col]) == 0 for r in injected)]
     note = ("\n(0 in every bar: " + "; ".join(z.lower() for z in zero) + ")") if zero else ""
     ax1.set_title("Injected runs: what happened" + note, fontsize=11)
     ax1.spines[["top", "right"]].set_visible(False)
-    ax1.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=2, frameon=False, fontsize=9)
+    leg1 = ax1.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=2, frameon=False, fontsize=9)
+    leg1.set_in_layout(False)  # long legend labels must not shrink the panel
 
     # Right: utility, injected vs benign, per model (pooled over defence settings).
     done, total = defaultdict(int), defaultdict(int)
