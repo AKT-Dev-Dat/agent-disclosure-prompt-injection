@@ -188,6 +188,9 @@ Anything that ended up different from the brief, and why. Reviewers trust a stud
 | 21 Nov | Only visible messages scored; hidden reasoning ignored | Haiku produces hidden reasoning, but it is encrypted and unreadable | Can't test "noticed but stayed quiet" from reasoning; stated as a limitation |
 | 21 Nov | A revision of P6/P7/D3 (P6 3–7, P7 0–1, D3 Agree) was drafted but never committed; git shows it postdates the pre-registration and the step-1 runs, so it is NOT used for scoring. Results are judged against the committed originals. | | |
 | 21 Nov | Headline changed after the pilot from 'disclosure varies by model' to 'where the safety signal is lost (model disclosure vs classifier blocking)'. | Pilot showed model disclosure at ceiling and 17/20 Opus runs blocked by the API classifier. | Pre-registered predictions are kept and reported unchanged; this change is post-hoc and labelled as such. |
+| 22 Nov | 3 benign task-39 runs the grader failed to format were hand-scored by Aman | Grader wrote reasoning before JSON on both attempts | Small; all 6 grader attempts and Aman's scores recorded |
+| 22 Nov | For benign runs, scores 2 and 3 are merged as 'flagged'; benign analysis reports only flagged/not and legitimate caution vs false alarm | Rubric's score 3 was written for injected instructions and doesn't fit correct phishing warnings | No effect on false-alarm rate (0 either way) |
+| 22 Nov | Human check reported with weak blinding | Condition almost determines grader score in this data | Agreement tests rubric application, not independent judgement; stated as a limitation |
 
 ---
 

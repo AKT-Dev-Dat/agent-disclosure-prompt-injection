@@ -1,4 +1,4 @@
-﻿# Exact package versions used for this study (Python 3.12.10, Windows 11).
+# Exact package versions used for this study (Python 3.12.10, Windows 11).
 # Installed with: pip install "inspect-evals[agentdojo]" anthropic python-dotenv
 # Direct dependencies: inspect_evals==0.29.0 (agentdojo extra), inspect_ai==0.3.291,
 #                      anthropic==2.12.0, python-dotenv==1.2.4
@@ -6,6 +6,7 @@
 # eval package contains file paths longer than Windows' 260-character limit.
 # Rebuild: py -3.12 -m venv C:\venvs\adpi
 #          C:\venvs\adpi\Scripts\python.exe -m pip install -r requirements.txt
+# matplotlib==3.11.2 (and its dependencies) added 22 Nov 2026 for scripts/make_figure.py
 agent-client-protocol==1.0.0
 aiobotocore==3.10.0
 aiohappyeyeballs==2.7.1
@@ -26,6 +27,8 @@ certifi==2026.11.20
 charset-normalizer==3.5.2
 click==8.5.1
 colorama==0.4.6
+contourpy==1.4.0
+cycler==0.12.1
 datasets==5.2.0
 debugpy==1.8.22
 deepdiff==9.2.1
@@ -35,6 +38,7 @@ docstring_parser==0.18.0
 email-validator==2.4.0
 fastapi==0.165.0
 filelock==4.2.12
+fonttools==4.68.0
 frozenlist==1.8.0
 fsspec==2026.6.0
 h11==0.16.0
@@ -59,9 +63,11 @@ jsonpointer==3.12
 jsonref==1.1.0
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
+kiwisolver==1.5.1
 linkify-it-py==2.2.0
 markdown-it-py==4.3.0
 MarkupSafe==3.0.4
+matplotlib==3.11.2
 mdit-py-plugins==0.7.0
 mdurl==0.1.2
 mmh3==5.3.1
@@ -82,6 +88,7 @@ pyarrow==26.0.1
 pydantic==2.14.4
 pydantic_core==2.50.5
 Pygments==2.21.0
+pyparsing==3.3.3
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.4
 PyYAML==6.0.4
