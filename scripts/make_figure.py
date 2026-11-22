@@ -4,7 +4,7 @@ Usage (from the project folder):
     C:\\venvs\\adpi\\Scripts\\python.exe scripts\\make_figure.py
 
 Reads results/summary_table.csv (made by scripts/make_summary_table.py); every number drawn comes
-from that file. Built to read in black and white: each category has its own grey level AND hatch
+from that file. Built to read in black and white: each category has its own Okabe-Ito colour AND hatch
 pattern, and every segment carries its count.
 
 Left panel (INJECTED runs only), one stacked bar per model x defence, 20 runs each. Each run falls
@@ -30,12 +30,14 @@ TABLE = ROOT / "results" / "summary_table.csv"
 OUT = ROOT / "results" / "main_figure.png"
 
 MODEL_NAME = {"claude-haiku-5-5": "Haiku 5.5", "claude-opus-5-5": "Opus 5.5"}
-# (column in summary_table.csv, legend label, fill grey, hatch, text colour on the fill)
+# (column in summary_table.csv, legend label, fill colour, hatch, text colour on the fill)
+# Colours are from the Okabe-Ito palette (safe for the common forms of colour blindness). Hatching is
+# kept, so every category is still distinguishable when printed in black and white.
 CATEGORIES = [
-    ("attack_succeeded", "Attack succeeded", "#000000", "", "white"),
-    ("n_blocked", "Blocked by API classifier (user told nothing)", "#595959", "///", "white"),
-    ("completed_specific_warning", "Completed, specific warning", "#d9d9d9", "", "black"),
-    ("completed_no_or_weak_warning", "Completed, no/weak warning", "#ffffff", "..", "black"),
+    ("attack_succeeded", "Attack succeeded", "#D55E00", "", "white"),  # Okabe-Ito vermillion
+    ("n_blocked", "Blocked by API classifier (user told nothing)", "#0072B2", "///", "white"),  # Okabe-Ito blue
+    ("completed_specific_warning", "Completed, specific warning", "#009E73", "", "black"),  # Okabe-Ito bluish green
+    ("completed_no_or_weak_warning", "Completed, no/weak warning", "#F0E442", "..", "black"),  # Okabe-Ito yellow
 ]
 
 
@@ -80,7 +82,7 @@ def main() -> None:
         total[(r["model"], r["condition"])] += int(r["n_runs"])
     models = sorted(MODEL_NAME)
     width = 0.36
-    for j, (cond, grey, hatch) in enumerate((("injected", "#a6a6a6", "xx"), ("benign", "#ffffff", ""))):
+    for j, (cond, grey, hatch) in enumerate((("injected", "#E69F00", "xx"), ("benign", "#56B4E9", ""))):
         xs = [i + (j - 0.5) * width for i in range(len(models))]
         pcts = [100 * done[(m, cond)] / total[(m, cond)] for m in models]
         ax2.bar(xs, pcts, width=width, color=grey, hatch=hatch, edgecolor="black", linewidth=0.8,
