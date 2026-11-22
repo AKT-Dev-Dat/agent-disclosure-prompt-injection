@@ -21,6 +21,12 @@ Sampling method (decision #11: "sampled by grader score so every level (0-3) is 
        of each model x condition group, then take one from each group in turn (round robin), so both
        models and both conditions are covered wherever that level contains them.
     4. Shuffle the final 30 (seed 2026) so the row order does not reveal the grader's score.
+
+Extra rows for grader failures (run once, after the sheet exists):
+    C:\\venvs\\adpi\\Scripts\\python.exe scripts\\make_human_check.py --add-grader-failures
+    Appends every run the grader could not score (empty score in results/disclosure_scores.csv) as rows
+    31, 32, ... with row_type = "grader_failure", so Aman hand-scores them too. These rows are EXCLUDED
+    from agreement statistics (there is no grader score to agree with). Rows 1-30 get row_type = "sample".
 """
 import csv
 import json
@@ -56,7 +62,60 @@ def allocate(sizes: dict[int, int], total: int) -> dict[int, int]:
     return quota
 
 
+def format_visible(visible_json: str) -> str:
+    visible = json.loads(visible_json)
+    n = len(visible)
+    return "\n\n".join(f"--- Message {i} of {n}{' (final message)' if i == n else ''} ---\n{m}"
+                       for i, m in enumerate(visible, 1)) or "(no visible text)"
+
+
+def read_csv(path: Path) -> list[dict]:
+    return list(csv.DictReader(path.open(encoding="utf-8-sig")))
+
+
+def write_csv(path: Path, rows: list[dict]) -> None:
+    with path.open("w", newline="", encoding="utf-8-sig") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+
+
+def add_grader_failures() -> None:
+    """Append the grader-failure runs as extra rows (row_type = grader_failure) to both files."""
+    sheet, key = read_csv(OUT), read_csv(KEY)
+    if any(r.get("row_type") == "grader_failure" for r in sheet):
+        sys.exit("Grader-failure rows are already in the sheet; nothing added.")
+    transcripts = {run_key(r): r for r in csv.DictReader(TRANSCRIPTS.open(encoding="utf-8-sig"))}
+    failed = [r for r in csv.DictReader(SCORES.open(encoding="utf-8-sig")) if r["score"] == ""]
+    from inspect_evals.agentdojo.task_suites.workspace.task_suite import WORKSPACE_TASK_SUITE
+    goals = {str(int(k)): t.GOAL for k, t in WORKSPACE_TASK_SUITE.injection_tasks.items()}
+
+    # Put row_type right after check_id in both files; existing rows are the stratified sample.
+    sheet = [{"check_id": r["check_id"], "row_type": "sample", **{k: v for k, v in r.items() if k != "check_id"}}
+             for r in sheet]
+    key = [{"check_id": r["check_id"], "row_type": "sample", **{k: v for k, v in r.items() if k != "check_id"}}
+           for r in key]
+    next_id = max(int(r["check_id"]) for r in sheet) + 1
+    for i, r in enumerate(failed):
+        t = transcripts[run_key(r)]
+        cid = next_id + i
+        sheet.append({"check_id": cid, "row_type": "grader_failure", "sample_id": r["sample_id"],
+                      "condition": r["condition"], "visible_messages": format_visible(t["visible_messages"]),
+                      "injected_goal": goals[t["injection_task_id"]] if r["condition"] == "injected" else "",
+                      "aman_score": "", "aman_legitimate_caution": ""})
+        key.append({"check_id": cid, "row_type": "grader_failure", "sample_id": r["sample_id"],
+                    "model": r["model"], "condition": r["condition"], "defence": r["defence"],
+                    "grader_score": "", "grader_warning_in_final_message": "", "grader_legitimate_caution": "",
+                    "grader_evidence_quote": "", "grader_reason": r["reason"]})
+    write_csv(OUT, sheet)
+    write_csv(KEY, key)
+    print(f"Added {len(failed)} grader-failure rows (check_id {next_id}-{next_id + len(failed) - 1}).")
+
+
 def main() -> None:
+    if "--add-grader-failures" in sys.argv:
+        add_grader_failures()
+        return
     for p in (OUT, KEY):
         if p.exists():
             sys.exit(f"{p} already exists; refusing to overwrite.")
