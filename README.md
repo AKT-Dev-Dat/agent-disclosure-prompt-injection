@@ -5,7 +5,7 @@
 ## Summary
 I hid instructions from an "attacker" inside the emails, calendar and files that two Claude AI assistants (Haiku 5.5 and Opus 5.5) were asked to work with, then checked whether the assistants obeyed them and whether they told the user. Neither assistant obeyed the hidden instructions in any of 80 attempts, and every time an assistant finished its task it told the user exactly what it had found and where, with no false alarms in 80 normal runs. But in 34 of the 40 Opus attempts, an automatic safety filter in Anthropic's service stopped the work partway and sent its signal only to the software running the assistant, which didn't pass it on, so the user got neither their task done nor any explanation.
 
-Study design, decisions and human scoring by Aman Tareen; the evaluation harness and analysis scripts were built with Claude Code.
+I chose the research question, made the design decisions, wrote the predictions and did the human scoring, working with Claude as a research assistant. The evaluation harness and analysis scripts were built with Claude Code.
 
 ![Where the safety signal is lost](results/main_figure.png)
 
